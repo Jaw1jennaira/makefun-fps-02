@@ -17,14 +17,18 @@ and grenades in the buy phase between rounds.
 - **Gunplay:** raycast hits, 2.5x headshots, recoil + spread that punish
   firing on the move, acceleration, crouch, jump, AABB map collision.
 - **Tactics:** spike plant/defuse objective, buy economy ($800 start,
-  +$300 kill, +$325 round win, +$300 plant), 4 weapons + frag grenade,
+  +$300 kill, +$325 round win, +$250 round loss with a +$50 loss-streak
+  bonus capped at +$150, +$300 plant), 4 weapons + frag grenade,
   bots that patrol lanes, hold sites, react to sight and sound, rush a
-  planted spike and defuse it.
+  planted spike and defuse it — each bot rolls its own skill (reaction
+  time and accuracy) and calls out contacts, plants and defuses on the
+  radio.
 - **HUD:** health, armor, ammo, money, round timer, score, killfeed,
   minimap (enemies shown when spotted), crosshair that widens with
-  movement, hitmarker, plant/defuse progress bars.
+  movement, hitmarker, damage direction indicator, radio callouts,
+  plant/defuse progress bars.
 - **Sound:** fully procedural WebAudio (shots, hits, reload, plant beeps,
-  explosion, round stingers) — no audio assets.
+  explosion, footsteps, radio blips, round stingers) — no audio assets.
 
 ## Controls
 

@@ -20,10 +20,13 @@ export function createHud() {
     plantBar: $('plant-bar'), plantFill: $('plant-fill'), plantLabel: $('plant-label'),
     damage: $('damage'), minimap: $('minimap'),
     weaponName: $('weapon-name'), grenades: $('grenades'),
+    dmgdir: $('dmgdir'), radio: $('radio'),
   };
   const mapCtx = el.minimap.getContext('2d');
   let hitTimer = 0;
   let bannerTimer = 0;
+  let dmgTimer = 0;
+  let radioTimer = 0;
 
   function setHealth(hp, armor) {
     el.healthNum.textContent = Math.max(0, Math.ceil(hp));
@@ -63,6 +66,21 @@ export function createHud() {
   function damageFlash() {
     el.damage.style.opacity = '0.55';
     setTimeout(() => { el.damage.style.opacity = '0'; }, 120);
+  }
+
+  // Points the red wedge at the shooter: deg is the angle from the player's
+  // facing, positive to the right (0 = straight ahead).
+  function damageDirection(deg) {
+    el.dmgdir.style.transform = 'rotate(' + deg.toFixed(1) + 'deg)';
+    el.dmgdir.style.opacity = '1';
+    dmgTimer = 700;
+  }
+
+  // One radio line at a time; a new callout replaces the old one.
+  function radio(text) {
+    el.radio.textContent = text;
+    el.radio.style.opacity = '1';
+    radioTimer = 3200;
   }
 
   function killfeed(text, friendly) {
@@ -192,11 +210,19 @@ export function createHud() {
       bannerTimer -= dt * 1000;
       if (bannerTimer <= 0) hideBanner();
     }
+    if (dmgTimer > 0) {
+      dmgTimer -= dt * 1000;
+      if (dmgTimer <= 0) el.dmgdir.style.opacity = '0';
+    }
+    if (radioTimer > 0) {
+      radioTimer -= dt * 1000;
+      if (radioTimer <= 0) el.radio.style.opacity = '0';
+    }
   }
 
   return {
     setHealth, setAmmo, setWeapon, setMoney, setTimer, setScore,
-    hitMarker, damageFlash, killfeed, banner, showOverlay, hideOverlay,
+    hitMarker, damageFlash, damageDirection, radio, killfeed, banner, showOverlay, hideOverlay,
     showBuy, hideBuy, setBuyTimer, setSpike, setPlant, setCrosshairSpread,
     drawMinimap, tick,
     onPlay(fn) { el.playBtn.addEventListener('click', fn); },

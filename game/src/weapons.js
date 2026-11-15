@@ -16,12 +16,12 @@ export const WEAPONS = {
     spread: 0.016, moveSpread: 0.03, recoil: 0.008, range: 50, zoom: 1,
   },
   rifle: {
-    id: 'rifle', name: 'AR-77 Rifle', price: 2700, damage: 33, headMult: 2.5,
+    id: 'rifle', name: 'AR-77 Rifle', price: 2500, damage: 33, headMult: 2.5,
     mag: 30, reserve: 90, auto: true, interval: 0.11, reloadTime: 1.9,
     spread: 0.009, moveSpread: 0.024, recoil: 0.013, range: 80, zoom: 1.25,
   },
   sniper: {
-    id: 'sniper', name: 'LW-50 Longshot', price: 4750, damage: 95, headMult: 2.5,
+    id: 'sniper', name: 'LW-50 Longshot', price: 4200, damage: 95, headMult: 2.5,
     mag: 5, reserve: 15, auto: false, interval: 1.15, reloadTime: 2.6,
     spread: 0.001, moveSpread: 0.05, recoil: 0.05, range: 100, zoom: 3,
   },

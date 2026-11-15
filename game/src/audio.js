@@ -80,6 +80,8 @@ export function createSfx() {
     spikeBeep() { tone(1200, 0.09, 0.3, 'sine'); },
     explosion() { noise(0.9, 300, 1.0); tone(70, 0.7, 0.6, 'sine', 30); },
     grenadePin() { tone(600, 0.04, 0.2, 'square'); },
+    step() { noise(0.05, 500, 0.14); },
+    radio() { tone(950, 0.04, 0.12, 'square'); setTimeout(() => tone(1250, 0.04, 0.12, 'square'), 55); },
     roundWin() { [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, 0.16, 0.3, 'triangle'), i * 110)); },
     roundLose() { [392, 330, 262].forEach((f, i) => setTimeout(() => tone(f, 0.18, 0.3, 'triangle'), i * 120)); },
     buy() { tone(760, 0.06, 0.25, 'sine'); setTimeout(() => tone(1010, 0.08, 0.25, 'sine'), 60); },

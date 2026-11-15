@@ -16,7 +16,9 @@ const WIN_ROUNDS = 4;
 const MAX_ROUNDS = 7;
 const KILL_REWARD = 300;
 const WIN_REWARD = 325;
-const LOSS_REWARD = 200;
+const LOSS_REWARD = 250;
+const LOSS_STREAK_BONUS = 50; // +$50 per consecutive loss, capped at +$150
+const LOSS_STREAK_CAP = 150;
 const PLANT_REWARD = 300;
 
 export function createGame(deps) {
@@ -46,6 +48,7 @@ export function createGame(deps) {
     reloadPending: false,
     defuser: null,
     elapsed: 0,
+    lossStreak: 0,
   };
   for (const id of Object.keys(WEAPONS)) {
     state.ammo[id] = { mag: WEAPONS[id].mag, reserve: WEAPONS[id].reserve };
@@ -57,6 +60,7 @@ export function createGame(deps) {
   let grenadeMesh = null;
   let explosionMesh = null;
   let explosionLife = 0;
+  let stepAcc = 0; // distance walked since the last footstep sound
 
   function shootables() {
     const list = world.shootables.slice();
@@ -231,6 +235,16 @@ export function createGame(deps) {
     if (player.state.armor) dmg = Math.round(dmg * 0.5);
     player.state.health -= dmg;
     hud.damageFlash();
+    if (fromBot) {
+      // Damage direction: angle of the shooter from the player's facing,
+      // positive to the right (0 = straight ahead).
+      const dx = fromBot.position.x - player.state.position.x;
+      const dz = fromBot.position.z - player.state.position.z;
+      const yaw = player.state.yaw;
+      const dotRight = dx * Math.cos(yaw) - dz * Math.sin(yaw);
+      const dotFwd = -dx * Math.sin(yaw) - dz * Math.cos(yaw);
+      hud.damageDirection(Math.atan2(dotRight, dotFwd) * 180 / Math.PI);
+    }
     sfx.hurt();
     hud.setHealth(player.state.health, player.state.armor);
     if (player.state.health <= 0) {
@@ -294,14 +308,19 @@ export function createGame(deps) {
     hud.setPlant(0, false, '');
     if (won) {
       state.scoreV += 1;
+      state.lossStreak = 0;
       state.money += WIN_REWARD;
       sfx.roundWin();
       hud.banner('ROUND WON', reason + '  ·  +' + formatMoney(WIN_REWARD));
     } else {
       state.scoreC += 1;
-      state.money += LOSS_REWARD;
+      state.lossStreak += 1;
+      // Losing streaks pay a little more each round, so an eco round after
+      // two losses can still buy an SMG — the buy decision stays live.
+      const lossPay = LOSS_REWARD + Math.min(LOSS_STREAK_CAP, (state.lossStreak - 1) * LOSS_STREAK_BONUS);
+      state.money += lossPay;
       sfx.roundLose();
-      hud.banner('ROUND LOST', reason + '  ·  +' + formatMoney(LOSS_REWARD));
+      hud.banner('ROUND LOST', reason + '  ·  +' + formatMoney(lossPay));
     }
     input.exitLock();
     state.time = 3.2;
@@ -329,6 +348,7 @@ export function createGame(deps) {
     state.round = 1;
     state.scoreV = 0;
     state.scoreC = 0;
+    state.lossStreak = 0;
     state.money = 800;
     state.owned = new Set(['pistol']);
     state.weaponId = 'pistol';
@@ -462,6 +482,17 @@ export function createGame(deps) {
     if (input.wasPressed('Digit3')) switchWeapon('rifle');
     if (input.wasPressed('Digit4')) switchWeapon('sniper');
 
+    // Footsteps: one soft tick per ~2.6 m walked on the ground.
+    if (player.state.alive && player.state.onGround) {
+      const spd = player.groundSpeed();
+      if (spd > 2) {
+        stepAcc += spd * dt;
+        if (stepAcc > 2.6) { stepAcc = 0; sfx.step(); }
+      } else {
+        stepAcc = 0;
+      }
+    }
+
     // Aim (right mouse): sniper scope zooms the most.
     const targetFov = input.state.aiming ? 74 / currentWeapon().zoom : 74;
     if (Math.abs(camera.fov - targetFov) > 0.1) {
@@ -482,6 +513,8 @@ export function createGame(deps) {
         state.money += PLANT_REWARD;
         hud.setPlant(0, false, '');
         hud.banner('SPIKE PLANTED AT SITE ' + site.letter, 'Defend it for ' + SPIKE_TIME + 's  ·  +' + formatMoney(PLANT_REWARD));
+        hud.radio('VANGUARD-1: Spike down at Site ' + site.letter + ' — hold the site!');
+        sfx.radio();
         sfx.spikeBeep();
         assignDefuser();
         for (const b of bots) b.hearShot(site.x, site.z);
@@ -541,6 +574,7 @@ export function createGame(deps) {
       onDamagePlayer: (dmg, fromBot) => hurtPlayer(dmg, fromBot),
       onDamageBot: (botCtrl, dmg) => onDamageBot(botCtrl, dmg),
       onDefused,
+      onCallout: (text) => { hud.radio(text); sfx.radio(); },
       isDefuser: false,
     };
     for (const b of bots) {
